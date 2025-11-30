@@ -1,6 +1,6 @@
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
-import { rm, readFile, mkdir, copyFile } from "fs/promises";
+import { rm, readFile, mkdir, writeFile } from "fs/promises";
 import path from "path";
 
 const allowlist = [
@@ -34,6 +34,17 @@ const allowlist = [
 async function buildForVercel() {
   await rm("dist", { recursive: true, force: true });
   await mkdir("dist", { recursive: true });
+
+  // Pre-compile the vite plugin so vite.config.ts can import it
+  console.log("Pre-compiling vite plugin...");
+  await esbuild({
+    entryPoints: ["vite-plugin-meta-images.ts"],
+    platform: "node",
+    bundle: false,
+    format: "esm",
+    outfile: "vite-plugin-meta-images.js",
+    logLevel: "info",
+  });
 
   console.log("Building client...");
   await viteBuild({
